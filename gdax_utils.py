@@ -30,21 +30,20 @@ class Client(object):
 
   def ticker(self, product_ids=None):
     # TODO: Configure default products or currencies e.g. USD only, ETH only.
-    # Add an extra space at the end for padding.
     header = [
-      'Product    ',
-      'Price      ',
-      'Size       ',
-      'Bid        ',
-      'Ask        ',
-      'Gap        ',
-      '24h Open   ',
-      '24h High   ',
-      '24h Low    ',
-      '24h Gain (%)   ',
-      '24h Volume     ',
+      'Product   ',
+      'Price     ',
+      'Size      ',
+      'Bid       ',
+      'Ask       ',
+      'Gap       ',
+      '24h Open  ',
+      '24h High  ',
+      '24h Low   ',
+      '24h Gain (%)  ',
+      '24h Volume    ',
     ]
-    print(''.join(header))
+    print(' '.join(header))
     if product_ids is None:
       product_ids = self._get_product_ids()
     for product_id in product_ids:
@@ -54,18 +53,18 @@ class Client(object):
       gain = float(tick['price']) - float(stats['open'])
       gain_perc = gain / float(stats['open']) * 100
       parts = [
-        '%-10s ' % product_id,
-        '%10s ' % self._truncate(tick['price'], 2),
-        '%10s ' % self._truncate(tick['size'], 4),
-        '%10s ' % self._truncate(tick['bid'], 2),
-        '%10s ' % self._truncate(tick['ask'], 2),
-        '%10s ' % self._truncate('%.6f' % gap, 2),
-        '%10s ' % self._truncate(stats['open'], 2),
-        '%10s ' % self._truncate(stats['high'], 2),
-        '%10s ' % self._truncate(stats['low'], 2),
+        '%-10s' % product_id,
+        '%10s' % self._truncate(tick['price'], 2),
+        '%10s' % self._truncate(tick['size'], 4),
+        '%10s' % self._truncate(tick['bid'], 2),
+        '%10s' % self._truncate(tick['ask'], 2),
+        '%10s' % self._truncate('%.6f' % gap, 2),
+        '%10s' % self._truncate(stats['open'], 2),
+        '%10s' % self._truncate(stats['high'], 2),
+        '%10s' % self._truncate(stats['low'], 2),
         '%6s (%s)' % (self._truncate(gain, 2), self._truncate(gain_perc, 1)),
         '%14s' % self._truncate(tick['volume'], 4)]
-      print(''.join(parts))
+      print(' '.join(parts))
 
   def balance(self):
     print('Currency  Balance')
@@ -95,11 +94,11 @@ class Client(object):
       if index != 0:
         print()
       print('Account: %s' % currency)
-      print(''.join([
-        'Type                 ',
-        'Amount     ',
-        'Balance    ',
-        'Product    ',
+      print(' '.join([
+        'Type                ',
+        'Amount    ',
+        'Balance   ',
+        'Product   ',
         'Date      ',
       ]))
       for page in self._client.get_account_history(id_):
@@ -111,11 +110,11 @@ class Client(object):
             type_ = 'transfer (%s)' % transfer_type
           elif type_ == 'match':
             product = item['details']['product_id']
-          print(''.join([
+          print(' '.join([
             '%-20s' % type_,
-            '%10s ' % self._truncate(item['amount'], accuracy),
-            '%10s ' % self._truncate(item['balance'], accuracy),
-            '%10s ' % product,
+            '%10s' % self._truncate(item['amount'], accuracy),
+            '%10s' % self._truncate(item['balance'], accuracy),
+            '%10s' % product,
             # TODO: convert date to local date.
             '%-20s' % item['created_at'],
           ]))
