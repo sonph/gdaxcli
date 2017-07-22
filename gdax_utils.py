@@ -9,9 +9,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import functools
+import logging
+import string
+
 import gdax
 
 import config
+
+DIGITS = set(string.digits)
 
 class Client(object):
   """Wrapper of the gdax-python library."""
@@ -21,6 +27,7 @@ class Client(object):
     self._client = gdax.AuthenticatedClient(
         key=config.KEY, b64secret=config.SECRET, passphrase=config.PASSPHRASE)
     # TODO: configure sandbox keys.
+    # TODO: allow public client.
 
   def products(self):
     """Lists products available for trading."""
@@ -75,6 +82,7 @@ class Client(object):
       bal = account['balance']
       hold = account['hold']
       currency = account['currency']
+      # TODO: allow other fiat currency. Default to usd but make it configurable.
       accuracy = 2 if currency == 'USD' else 4
       parts = [
         '%-10s' % account['currency'],
@@ -146,6 +154,83 @@ class Client(object):
           '%20s' % order['created_at'],
         ]))
         # TODO: local date.
+
+  def order(self, order_type, side, product, size, price):
+    """Place an order.
+
+    Args:
+      order_type: One of limit, market or stop.
+      side: One of buy or sell.
+      product: The product to be exchanged. Can be uppercased or lowercased.
+          For example: eth-usd, BTC-GBP, ...
+      size: The amount to buy or sell. Can be coin or fiat.
+      price: Price to place limit/stop order. Ignored if order type is market.
+          Price can be relative to the current ticker price by prepending
+          the difference amount with + or - . Order is checked to make sure
+          you're not buying higher or selling lower than current price.
+    """
+    product = product.upper()
+    self._check_valid_order(
+        order_type, side, product, size, price)
+
+    # TODO: make this configurable
+    self_trade_prevention = True
+    func = self._client.buy if side == 'buy' else self._client.sell
+    func = functools.partial(func, product_id=product, type=order_type, side=side,
+                             size=size, stp=self_trade_prevention)
+
+    current_price = float(self._client.get_product_ticker(product)['price'])
+
+    if order_type == 'market':
+      logging.info('Placing market order: %s %s @ %.2f',
+                   side, size, current_price)
+      func()
+
+    elif order_type == 'limit':
+      abs_price, amount = self._parse_price(price, current_price)
+      if side == 'buy' and amount >= 0:
+        raise ValueError(
+            'Buying higher than or equal to current price: %s >= %.2f' % (
+            abs_price, current_price))
+      elif side == 'sell' and amount <= 0:
+        raise ValueError(
+            'Selling lower than or equal to current price: %s <= %.2f' % (
+            abs_price, current_price))
+      logging.info('Placing limit order: %s %s @ %s (%.2f)',
+                   side, size, abs_price, float(abs_price) - current_price)
+      # TODO: make time_in_force, post_only configurable.
+      func(price=abs_price)
+
+    elif order_type == 'stop':
+      # TODO
+      raise NotImplementedError('This functionality is not yet implemented.')
+
+  def _parse_price(self, price, current_price):
+    # TODO: make default diff amount configurable.
+
+    if price[0] in DIGITS:
+      # Absolute price.
+      return (self._truncate(price, 2), float(price) - current_price)
+
+    # Relative price.
+    amount = float(price[1:])
+    if price.startswith('-'):
+      amount = -amount
+    abs_price = current_price + amount
+    # If we simply call str, it may return a scientific notation e.g. 5e-5.
+    return (self._truncate('%.6f' % abs_price, 2), amount)
+
+  def _check_valid_order(
+      self, order_type, side, product, size, price):
+    product = product.upper()
+    product_ids = self._get_product_ids()
+    # TODO: throw more meaningful error messages.
+    assert order_type in {'market', 'limit', 'stop'}
+    assert side in {'buy', 'sell'}
+    assert product in product_ids
+    float(size)
+    if order_type != 'market':
+      assert price[0] in (DIGITS | {'-', '+'})
 
   def _get_product_ids(self):
     """Gets sorted list of products."""

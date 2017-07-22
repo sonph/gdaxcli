@@ -10,10 +10,17 @@ Work in progress.
 Usage: gdaxcli <command> [arguments]
     products                      Lists products available for trading.
     ticker [product1 product2..]  Get current market ticker.
+
     balance                       Get account balance.
     history [account1 account2..] Get account history (transfer, match, fee, rebate).
-                                  Default USD.
+                                      Default USD.
+
     orders                        List open orders.
+    order limit/market/stop buy/sell product size [price]
+                                  Place an order. Limit price can be absolute or
+                                      relative such as 180, 180.23, -1, +.5
+                                      Product can be uppercased or lowercased.
+                                      For example: eth-usd, BTC-GBP, ..
 ```
 
 ## Configuring
