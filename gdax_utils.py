@@ -41,6 +41,7 @@ class Client(object):
       '24h Open   ',
       '24h High   ',
       '24h Low    ',
+      '24h Gain (%)   ',
       '24h Volume     ',
     ]
     print(''.join(header))
@@ -50,6 +51,8 @@ class Client(object):
       tick = self._client.get_product_ticker(product_id)
       gap = float(tick['ask']) - float(tick['bid'])
       stats = self._client.get_product_24hr_stats(product_id)
+      gain = float(tick['price']) - float(stats['open'])
+      gain_perc = gain / float(stats['open']) * 100
       parts = [
         '%-10s ' % product_id,
         '%10s ' % self._truncate(tick['price'], 2),
@@ -60,6 +63,7 @@ class Client(object):
         '%10s ' % self._truncate(stats['open'], 2),
         '%10s ' % self._truncate(stats['high'], 2),
         '%10s ' % self._truncate(stats['low'], 2),
+        '%6s (%s)' % (self._truncate(gain, 2), self._truncate(gain_perc, 1)),
         '%14s' % self._truncate(tick['volume'], 4)]
       print(''.join(parts))
 
@@ -77,6 +81,8 @@ class Client(object):
     0.1111115 BTC, but rounding up could show 0.111112, which exceeds the actual
     amount when you try to sell all of it.
     """
+    if not isinstance(s, str):
+      s = str(s)
     for index, char in enumerate(s):
       if char == '.':
         dot_index = index
