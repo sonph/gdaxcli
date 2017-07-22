@@ -16,10 +16,11 @@ Usage: gdaxcli <command> [arguments]
 
 To obtain an API key for your account to be used with this tool:
 
-  1. Login to your account
-  2. Go to [https://www.gdax.com/settings/api][4]
-  3. Create an API key with **trade** permission
-  4. Copy `config.example.py` to `config.py` and copy these three things from the website into the file:
+  1. Login to your GDAX account
+  2. Go to **Settings** > **API** or [https://www.gdax.com/settings/api][4]
+  3. Generate an API key with **trade** permission
+  4. Copy `[config.example.py](config.example.py)` to `config.py` and copy these three things from
+  the website into the file:
     - the key
     - the secret
     - the passphrase
@@ -33,8 +34,10 @@ KEY = 'tyeg0pwwv60x2oipzl2r5osfzidtppd'
 SECRET = 'bGFza2pkZjtoZWkyODM5NHkybGtmbHN5ZGY4MjNomxrZHNmYWFhZGZ3MTIzMTJhZA=='
 ```
 
-(remember, it's a secret, so don't let anyone else know)
+Remember, it's a secret, so don't let anyone else know. See [gdax docs][5] for more information on
+API key.
 
+**TODO**: mention the sandbox
 
 ## Contributing
 
@@ -60,3 +63,5 @@ Remember:
 [2]: https://choosealicense.com/licenses/mit/
 [3]: CONTRIBUTING.md
 [4]: https://www.gdax.com/settings/api
+[5]: https://docs.gdax.com/#generating-an-api-key
+[6]: https://public.sandbox.gdax.com
