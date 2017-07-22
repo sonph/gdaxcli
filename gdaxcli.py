@@ -5,13 +5,15 @@ import gdax_utils
 import utils
 
 # TODO: Maybe use short commands e.g. t, h, o, ...
-COMMANDS = {'balance', 'products', 'ticker', 'balance'}
+COMMANDS = {'balance', 'products', 'ticker', 'balance', 'history'}
 
 def usage():
   """Usage: gdaxcli <command> [arguments]
       products                      Lists products available for trading.
       ticker [product1 product2..]  Get current market ticker.
       balance                       Get account balance.
+      history [account1 account2..] Get account history (transfer, match, fee, rebate).
+                                    Default USD.
   """
 
 def main():
@@ -29,13 +31,16 @@ def main():
 
   if cmd == 'help':
     print(usage.__doc__)
-  if cmd == 'products':
+  elif cmd == 'products':
     client.products()
-  if cmd == 'ticker':
+  elif cmd == 'ticker':
     products = sys.argv[2:] if len(sys.argv) > 2 else None
     client.ticker(products)
-  if cmd == 'balance':
+  elif cmd == 'balance':
     client.balance()
+  elif cmd == 'history':
+    accounts = sys.argv[2:] if len(sys.argv) > 2 else ['USD']
+    client.history(accounts)
 
 if __name__ == '__main__':
   utils.configure_logging(to_file=False)

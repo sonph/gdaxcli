@@ -86,6 +86,40 @@ class Client(object):
             self._truncate(bal, accuracy), self._truncate(hold, accuracy)))
       print(''.join(parts))
 
+  def history(self, accounts):
+    account_ids = [(acc['id'], acc['currency'])
+        for acc in self._client.get_accounts() if acc['currency'] in accounts]
+    for index, data in enumerate(account_ids):
+      id_, currency = data
+      accuracy = 2 if currency == 'USD' else 4
+      if index != 0:
+        print()
+      print('Account: %s' % currency)
+      print(''.join([
+        'Type                 ',
+        'Amount     ',
+        'Balance    ',
+        'Product    ',
+        'Date      ',
+      ]))
+      for page in self._client.get_account_history(id_):
+        for item in page:
+          type_ = item['type']
+          product = ''
+          if type_ == 'transfer':
+            transfer_type = item['details']['transfer_type']
+            type_ = 'transfer (%s)' % transfer_type
+          elif type_ == 'match':
+            product = item['details']['product_id']
+          print(''.join([
+            '%-20s' % type_,
+            '%10s ' % self._truncate(item['amount'], accuracy),
+            '%10s ' % self._truncate(item['balance'], accuracy),
+            '%10s ' % product,
+            # TODO: convert date to local date.
+            '%-20s' % item['created_at'],
+          ]))
+
   def _get_product_ids(self):
     """Gets sorted list of products."""
     products = self._client.get_products()

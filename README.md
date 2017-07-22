@@ -11,6 +11,8 @@ Usage: gdaxcli <command> [arguments]
     products                      Lists products available for trading.
     ticker [product1 product2..]  Get current market ticker.
     balance                       Get account balance.
+    history [account1 account2..] Get account history (transfer, match, fee, rebate).
+                                  Default USD.
 ```
 
 ## Configuring
