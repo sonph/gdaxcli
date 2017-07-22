@@ -9,13 +9,14 @@ To obtain an API key for your account to be used with this tool:
   1. Login to your account
   2. Go to [https://www.gdax.com/settings/api][4]
   3. Create an API key with **trade** permission
-  4. Open up `config.py` file and copy these three things from the website into the file:
+  4. Copy `config.example.py` to `config.py` and copy these three things from the website into the file:
     - the key
     - the secret
     - the passphrase
 
 so it looks like this:
 
+(file `config.py`)
 ```
 PASSPHRASE = 'ts2an3wj1'
 KEY = 'tyeg0pwwv60x2oipzl2r5osfzidtppd'
