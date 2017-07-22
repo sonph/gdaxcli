@@ -2,6 +2,16 @@
 
 A commandline client for cryptocurrency trading on [GDAX][1] (Global Digital Assets Exchange).
 
+Work in progress.
+
+## Usage
+
+```
+Usage: gdaxcli <command> [arguments]
+    products                      Lists products available for trading.
+    ticker [product1 product2..]  Get current market ticker.
+```
+
 ## Configuring
 
 To obtain an API key for your account to be used with this tool:
