@@ -38,7 +38,10 @@ class Client(object):
       'Bid        ',
       'Ask        ',
       'Gap        ',
-      '24H Volume     ',
+      '24h Open   ',
+      '24h High   ',
+      '24h Low    ',
+      '24h Volume     ',
     ]
     print(''.join(header))
     if product_ids is None:
@@ -46,13 +49,17 @@ class Client(object):
     for product_id in product_ids:
       tick = self._client.get_product_ticker(product_id)
       gap = float(tick['ask']) - float(tick['bid'])
+      stats = self._client.get_product_24hr_stats(product_id)
       parts = [
-        '%-10s' % product_id,
-        '%10s' % self._truncate(tick['price'], 2),
-        '%10s' % self._truncate(tick['size'], 4),
-        '%10s' % self._truncate(tick['bid'], 2),
-        '%10s' % self._truncate(tick['ask'], 2),
-        '%10s' % self._truncate('%.6f' % gap, 2),
+        '%-10s ' % product_id,
+        '%10s ' % self._truncate(tick['price'], 2),
+        '%10s ' % self._truncate(tick['size'], 4),
+        '%10s ' % self._truncate(tick['bid'], 2),
+        '%10s ' % self._truncate(tick['ask'], 2),
+        '%10s ' % self._truncate('%.6f' % gap, 2),
+        '%10s ' % self._truncate(stats['open'], 2),
+        '%10s ' % self._truncate(stats['high'], 2),
+        '%10s ' % self._truncate(stats['low'], 2),
         '%14s' % self._truncate(tick['volume'], 4)]
       print(''.join(parts))
 
