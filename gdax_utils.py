@@ -120,6 +120,34 @@ class Client(object):
             '%-20s' % item['created_at'],
           ]))
 
+  def orders(self):
+    pages = self._client.get_orders()
+    print(' '.join([
+      'Side      ',
+      'Size      ',
+      'Size (USD)',
+      'Filled    ',
+      'Price     ',
+      'Fees      ',
+      'Status    ',
+      'Date placed'
+    ]))
+    for page in pages:
+      for order in page:
+        size_usd = float(order['size']) * float(order['price'])
+        fees = self._truncate(order['fill_fees'], 2)
+        print(' '.join([
+          '%-10s' % order['side'],
+          '%10s' % self._truncate(order['size'], 4),
+          '%10s' % self._truncate(str(size_usd), 2),
+          '%10s' % self._truncate(order['filled_size'], 4),
+          '%10s' % self._truncate(order['price'], 2),
+          '%10s' % fees,
+          '%10s' % order['status'],
+          '%20s' % order['created_at'],
+        ]))
+        # TODO: local date.
+
   def _get_product_ids(self):
     """Gets sorted list of products."""
     products = self._client.get_products()

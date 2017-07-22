@@ -13,6 +13,7 @@ Usage: gdaxcli <command> [arguments]
     balance                       Get account balance.
     history [account1 account2..] Get account history (transfer, match, fee, rebate).
                                   Default USD.
+    orders                        List open orders.
 ```
 
 ## Configuring
