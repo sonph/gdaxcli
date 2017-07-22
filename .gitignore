@@ -1,4 +1,5 @@
 *.pyc
 *.log
 config.py
+Pipfile.lock
 
