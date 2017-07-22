@@ -10,6 +10,7 @@ Work in progress.
 Usage: gdaxcli <command> [arguments]
     products                      Lists products available for trading.
     ticker [product1 product2..]  Get current market ticker.
+    balance                       Get account balance.
 ```
 
 ## Configuring

@@ -67,6 +67,25 @@ class Client(object):
         '%14s' % self._truncate(tick['volume'], 4)]
       print(''.join(parts))
 
+  def balance(self):
+    print('Currency  Balance')
+    accounts = self._client.get_accounts()
+    accounts.sort(key=lambda acc: acc['currency'])
+    for account in accounts:
+      avail = account['available']
+      bal = account['balance']
+      hold = account['hold']
+      currency = account['currency']
+      accuracy = 2 if currency == 'USD' else 4
+      parts = [
+        '%-10s' % account['currency'],
+        self._truncate(avail, accuracy),
+      ]
+      if avail != bal:
+        parts.append(' (%s - %s)' % (
+            self._truncate(bal, accuracy), self._truncate(hold, accuracy)))
+      print(''.join(parts))
+
   def _get_product_ids(self):
     """Gets sorted list of products."""
     products = self._client.get_products()
