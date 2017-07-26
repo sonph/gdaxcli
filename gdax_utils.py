@@ -159,16 +159,59 @@ class Client(object):
 
   def balance(self):
     rows = []
+
+    prices = {}
+    for product_id in self._get_product_ids():
+      # TODO: support other currencies
+      if product_id.endswith('-USD'):
+        prices[product_id] = self._client.get_product_ticker(
+            product_id)['price']
+
+    totals = {}
+    acc_totals = {}
     accounts = self._client.get_accounts()
     accounts.sort(key=lambda acc: acc['currency'])
     for acc in accounts:
       hodl = acc['hold']
+
+      if acc['currency'] != 'USD':
+        total_usd = float(prices[acc['currency'] + '-USD']) * float(acc['balance'])
+      else:
+        total_usd = float(acc['balance'])
+
+      # We need to store float values here, since the OrderedDict's have the
+      # colored strings.
+      acc_totals[acc['currency']] = total_usd
+
+      # Calculate sum total.
+      totals['balance'] = totals.get('balance', 0) + float(acc['balance'])
+      totals['available'] = totals.get('available', 0) + float(acc['available'])
+      totals['hold'] = totals.get('hold', 0) + float(acc['hold'])
+      totals['total_usd'] = totals.get('total_usd', 0) + total_usd
+
       rows.append(OrderedDict([
         ('currency', acc['currency']),
         ('balance', acc['balance']),
         ('available', acc['available']),
         ('hold', red(hodl) if not is_str_zero(hodl) else hodl),
+        ('total_usd', total_usd)
       ]))
+
+    # Add total row.
+    rows.append(OrderedDict([
+      ('currency', 'TOTAL'),
+      ('balance', totals['balance']),
+      ('available', totals['available']),
+      ('hold', red(totals['hold']) if positive(totals['hold']) else totals['hold']),
+      ('total_usd', green(totals['total_usd'])),
+    ]))
+
+    # Calculate percent holding in each of teh currencies as `perc` column.
+    for acc in rows:
+      if acc['currency'] != 'TOTAL':
+        perc = float(acc_totals[acc['currency']]) / totals['total_usd'] * 100
+        acc['perc'] = perc
+
     print(tabulate(rows))
 
   def history(self, accounts):
