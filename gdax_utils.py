@@ -9,19 +9,24 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+# OrderedDict retains its key order, so we get consistent column ordering.
+from collections import OrderedDict
 import functools
 import logging
 import string
 import sys
 import traceback
 
-from tabulate import tabulate
+# https://pypi.python.org/pypi/colorama
+import colorama
+colorama.init()
 
-# OrderedDict retains its key order, so we get consistent column ordering.
-from collections import OrderedDict
+# https://pypi.python.org/pypi/tabulate
+from tabulate import tabulate
 
 try:
   import gdax
+  # TODO: include other non-standard libraries in this as well.
 except ImportError:
   traceback.print_exc()
   print('Unable to import gdax. Make sure you follow the installation'
@@ -37,10 +42,62 @@ except ImportError:
   sys.exit(1)
 
 DIGITS = set(string.digits)
-ACCURACY = 4
+
+# TODO: make this configurable.
+DEFAULT_ACCURACY = 4
 
 tabulate = functools.partial(tabulate,
-    tablefmt='plain', headers='keys', floatfmt='.%df' % ACCURACY)
+    tablefmt='plain', headers='keys', floatfmt='.%df' % DEFAULT_ACCURACY)
+
+negative = lambda x: float(x) < 0
+nonnegative = lambda x: float(x) >= 0
+positive = lambda x: float(x) > 0
+nonpositive = lambda x: float(x) <= 0
+
+def format_float(value, accuracy=DEFAULT_ACCURACY):
+  """Formatting the value as a float with set number of digits after the dot.
+
+  This is only needed if we want to colorize it or use a different number of
+  digits other than the default, before adding it into the table. Otherwise,
+  tabulate automatically formats the value for us.
+  """
+  placeholder = '%.' + str(accuracy) + 'f'
+  return placeholder % float(value)
+
+def colorize(value, condition, accuracy=None):
+  """Return green string if condition is true; red otherwise.
+
+  Args:
+    value: Value to return as string. If it's a float, it will be formatted.
+    condition: Either a bool or a lambda.
+  """
+  if isinstance(value, float):
+    if accuracy is None:
+      value = format_float(value)
+    else:
+      value = format_float(value, accuracy)
+
+  if not isinstance(condition, bool):
+    condition = condition(value)
+
+  color = colorama.Fore.GREEN if condition else colorama.Fore.RED
+  return color + value + colorama.Style.RESET_ALL
+
+green = lambda value: colorize(value, True)
+red = lambda value: colorize(value, False)
+
+def is_str_zero(s):
+  """Returns True is string s is strictly zero.
+
+  Converting the value to float and comparing with 0 within a set threshold is
+  another approach, but since gdax returns a string, why not just check it?
+  """
+  for char in s:
+    if char in DIGITS:
+      if char != '0':
+        return False
+  return True
+
 
 class Client(object):
   """Wrapper of the gdax-python library."""
@@ -83,12 +140,14 @@ class Client(object):
         ('size', float(tick['size'])),
         ('bid', float(tick['bid'])),
         ('ask', float(tick['ask'])),
-        ('gap' , float(gap)),
+        ('gap' , gap),
         ('24h_volume', float(tick['volume'])),
         ('24h_open', float(stats['open'])),
         ('24h_high', float(stats['high'])),
         ('24h_low', float(stats['low'])),
-        ('24h_gain', '%.2f (%.2f)' % (gain, gain_perc)),
+        ('24h_gain', colorize(gain, nonnegative)),
+        ('perc', colorize(format_float(gain_perc, 2),
+                                   nonnegative(gain_perc)))
       ]))
     print(tabulate(rows))
 
@@ -96,12 +155,13 @@ class Client(object):
     rows = []
     accounts = self._client.get_accounts()
     accounts.sort(key=lambda acc: acc['currency'])
-    for account in accounts:
+    for acc in accounts:
+      hodl = acc['hold']
       rows.append(OrderedDict([
-        ('currency', account['currency']),
-        ('balance', account['balance']),
-        ('available', account['available']),
-        ('hold', account['hold']),
+        ('currency', acc['currency']),
+        ('balance', acc['balance']),
+        ('available', acc['available']),
+        ('hold', red(hodl) if not is_str_zero(hodl) else hodl),
       ]))
     print(tabulate(rows))
 
@@ -124,21 +184,27 @@ class Client(object):
 
       for page in self._client.get_account_history(acc_id):
         for item in page:
-          type_ = item['type']
-          product = ''
+          is_green = True
+          product, type_, amount = '', item['type'], float(item['amount'])
           if type_ == 'transfer':
             transfer_type = item['details']['transfer_type']
+            is_green = (transfer_type == 'deposit')
             type_ = 'transfer (%s)' % transfer_type
           elif type_ == 'match':
             product = item['details']['product_id']
+            is_green = nonnegative(amount)
+          elif type_ == 'fee':
+            is_green = False
           rows.append(OrderedDict([
-            ('type', type_),
-            ('amount', float(item['amount'])),
-            ('balance', float(item['balance'])),
+            ('type', colorize(type_, is_green)),
+            # TODO: fix the amount column not aligned as numbers. This is
+            # probably due to the color.
+            ('amount', colorize(amount, is_green)),
+            ('balance', format_float(item['balance'])),
             ('product_id', product),
             ('created_at', item['created_at']),
           ]))
-      print(tabulate(rows))
+      print(tabulate(rows, numalign="decimal"))
 
   def orders(self):
     rows = []
@@ -147,19 +213,20 @@ class Client(object):
       for order in page:
         size, price = float(order['size']), float(order['price'])
         size_usd = size * price
+        fill_fees = order['fill_fees']
         rows.append(OrderedDict([
           ('id', order['id'][6]),
           ('product_id', order['product_id']),
-          ('side', order['side']),
+          ('side', colorize(order['side'], lambda x: x == 'buy')),
           ('type', order['type']),
           ('price', price),
           ('size', size),
           ('size_usd', size_usd),
           ('filled_size', float(order['filled_size'])),
-          ('fill_fees', float(order['fill_fees'])),
-          ('status', order['status']),
+          ('fill_fees', red(format_float(fill_fees)) if not is_str_zero(fill_fees) else float(fill_fees)),
+          ('status', colorize(order['status'], lambda x: x == 'open')),
           ('time_in_force', order['time_in_force']),
-          ('settled', 'yes' if order['settled'] else 'no'),
+          ('settled', 'yes' if order['settled'] else red('no')),
           ('stp', order['stp']),
           ('created_at', order['created_at']),
           # TODO: local date.
@@ -228,14 +295,15 @@ class Client(object):
       for fill in page:
         size, price = float(fill['size']), float(fill['price'])
         size_usd = size * price
+        fee = fill['fee']
         rows.append(OrderedDict([
           ('product_id', fill['product_id']),
-          ('side', fill['side']),
+          ('side', colorize(fill['side'], lambda side: side == 'buy')),
           ('price', price),
           ('size', size),
           ('size_usd', size_usd),
-          ('fee', float(fill['fee'])),
-          ('settled', fill['settled']),
+          ('fee', red(fee) if not is_str_zero(fee) else fee),
+          ('settled', 'yes' if fill['settled'] else red('no')),
           ('created_at', fill['created_at']),
         ]))
     if rows:
@@ -294,3 +362,4 @@ class Client(object):
     else:
       end = len(s)
     return s[:end]
+
