@@ -265,12 +265,12 @@ class Client(object):
     product = product.upper()
     product_ids = self._get_product_ids()
     # TODO: throw more meaningful error messages.
-    assert order_type in {'market', 'limit', 'stop'}
-    assert side in {'buy', 'sell'}
+    assert order_type in set(['market', 'limit', 'stop'])
+    assert side in set(['buy', 'sell'])
     assert product in product_ids
     float(size)
     if order_type != 'market':
-      assert price[0] in (DIGITS | {'-', '+'})
+      assert price[0] in (DIGITS | set(['-', '+']))
 
   def _get_product_ids(self):
     """Gets sorted list of products."""
