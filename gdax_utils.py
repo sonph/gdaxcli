@@ -205,6 +205,32 @@ class Client(object):
       # TODO
       raise NotImplementedError('This functionality is not yet implemented.')
 
+  def fills(self, product=None):
+    print(' '.join([
+      'Product   ',
+      'Side      ',
+      'Price     ',
+      'Size      ',
+      'Size (USD)',
+      'Fees (USD)',
+      'Settled   ',
+      'Date',
+    ]))
+    pages = self._client.get_fills(product_id=product)
+    for page in pages:
+      for fill in page:
+        size_usd = float(fill['size']) * float(fill['price'])
+        print(' '.join([
+          '%-10s' % fill['product_id'],
+          '%10s' % fill['side'],
+          '%10s' % self._truncate(fill['price'], 2),
+          '%10s' % self._truncate(fill['size'], 2),
+          '%10s' % self._truncate('%.6f' % size_usd, 2),
+          '%10s' % ('%.2f' % float(fill['fee'])),
+          '%10s' % fill['settled'],
+          fill['created_at'],
+        ]))
+
   def _parse_price(self, price, current_price):
     # TODO: make default diff amount configurable.
 

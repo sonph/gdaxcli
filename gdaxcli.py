@@ -4,11 +4,8 @@ import sys
 import gdax_utils
 import utils
 
-# TODO: Maybe use short commands e.g. t, h, o, ...
-COMMANDS = {
-    'balance', 'products', 'ticker', 'balance', 'history', 'orders', 'order'}
-
 def usage():
+  # TODO: Maybe add short commands e.g. t, h, o, ...
   """Usage: gdaxcli <command> [arguments]
       products                      Lists products available for trading.
       ticker [product1 product2..]  Get current market ticker.
@@ -23,6 +20,7 @@ def usage():
                                         relative such as 180, 180.23, -1, +.5
                                         Product can be uppercased or lowercased.
                                         For example: eth-usd, BTC-GBP, ..
+      fills [product]               Get recent fills.
   """
 
 def main():
@@ -31,10 +29,6 @@ def main():
   except IndexError:
     print(usage.__doc__)
     sys.exit()
-
-  if cmd not in COMMANDS:
-    logging.error('Invalid command: %s', cmd)
-    sys.exit(1)
 
   client = gdax_utils.Client()
 
@@ -53,6 +47,7 @@ def main():
   elif cmd == 'orders':
     client.orders()
   elif cmd == 'order':
+    # TODO: add confirmation and option to skip -y/--yes
     try:
       order_type = sys.argv[2]
       side = sys.argv[3]
@@ -62,6 +57,12 @@ def main():
     except IndexError:
       raise ValueError('Missing a required value')
     client.order(order_type, side, product, size, price)
+  elif cmd == 'fills':
+    client.fills()
+  else:
+    logging.error('Invalid command: %s', cmd)
+    sys.exit(1)
+
 
 if __name__ == '__main__':
   utils.configure_logging(to_file=False)
