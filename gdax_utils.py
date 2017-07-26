@@ -15,6 +15,11 @@ import string
 import sys
 import traceback
 
+from tabulate import tabulate
+
+# OrderedDict retains its key order, so we get consistent column ordering.
+from collections import OrderedDict
+
 try:
   import gdax
 except ImportError:
@@ -32,6 +37,10 @@ except ImportError:
   sys.exit(1)
 
 DIGITS = set(string.digits)
+ACCURACY = 4
+
+tabulate = functools.partial(tabulate,
+    tablefmt='plain', headers='keys', floatfmt='.%df' % ACCURACY)
 
 class Client(object):
   """Wrapper of the gdax-python library."""
@@ -45,26 +54,21 @@ class Client(object):
 
   def products(self):
     """Lists products available for trading."""
-    print('Product')
-    for product in self._get_product_ids():
-      print(product)
+    rows = []
+    for product in self._client.get_products():
+      rows.append(OrderedDict([
+        ('id', product['id']),
+        ('base_currency', product['base_currency']),
+        ('quote_currency', product['quote_currency']),
+        ('base_min_size', product['base_min_size']),
+        ('base_max_size', product['base_max_size']),
+        ('quote_increment', product['quote_increment']),
+    ]))
+    print(tabulate(rows))
 
   def ticker(self, product_ids=None):
     # TODO: Configure default products or currencies e.g. USD only, ETH only.
-    header = [
-      'Product   ',
-      'Price     ',
-      'Size      ',
-      'Bid       ',
-      'Ask       ',
-      'Gap       ',
-      '24h Open  ',
-      '24h High  ',
-      '24h Low   ',
-      '24h Gain (%)  ',
-      '24h Volume    ',
-    ]
-    print(' '.join(header))
+    rows = []
     if product_ids is None:
       product_ids = self._get_product_ids()
     for product_id in product_ids:
@@ -73,57 +77,52 @@ class Client(object):
       stats = self._client.get_product_24hr_stats(product_id)
       gain = float(tick['price']) - float(stats['open'])
       gain_perc = gain / float(stats['open']) * 100
-      parts = [
-        '%-10s' % product_id,
-        '%10s' % self._truncate(tick['price'], 2),
-        '%10s' % self._truncate(tick['size'], 4),
-        '%10s' % self._truncate(tick['bid'], 2),
-        '%10s' % self._truncate(tick['ask'], 2),
-        '%10s' % self._truncate('%.6f' % gap, 2),
-        '%10s' % self._truncate(stats['open'], 2),
-        '%10s' % self._truncate(stats['high'], 2),
-        '%10s' % self._truncate(stats['low'], 2),
-        '%6s (%s)' % (self._truncate(gain, 2), self._truncate(gain_perc, 1)),
-        '%14s' % self._truncate(tick['volume'], 4)]
-      print(' '.join(parts))
+      rows.append(OrderedDict([
+        ('product_id', product_id),
+        ('price', float(tick['price'])),
+        ('size', float(tick['size'])),
+        ('bid', float(tick['bid'])),
+        ('ask', float(tick['ask'])),
+        ('gap' , float(gap)),
+        ('24h_volume', float(tick['volume'])),
+        ('24h_open', float(stats['open'])),
+        ('24h_high', float(stats['high'])),
+        ('24h_low', float(stats['low'])),
+        ('24h_gain', '%.2f (%.2f)' % (gain, gain_perc)),
+      ]))
+    print(tabulate(rows))
 
   def balance(self):
-    print('Currency  Balance')
+    rows = []
     accounts = self._client.get_accounts()
     accounts.sort(key=lambda acc: acc['currency'])
     for account in accounts:
-      avail = account['available']
-      bal = account['balance']
-      hold = account['hold']
-      currency = account['currency']
-      # TODO: allow other fiat currency. Default to usd but make it configurable.
-      accuracy = 2 if currency == 'USD' else 4
-      parts = [
-        '%-10s' % account['currency'],
-        self._truncate(avail, accuracy),
-      ]
-      if avail != bal:
-        parts.append(' (%s - %s)' % (
-            self._truncate(bal, accuracy), self._truncate(hold, accuracy)))
-      print(''.join(parts))
+      rows.append(OrderedDict([
+        ('currency', account['currency']),
+        ('balance', account['balance']),
+        ('available', account['available']),
+        ('hold', account['hold']),
+      ]))
+    print(tabulate(rows))
 
   def history(self, accounts):
-    account_ids = [(acc['id'], acc['currency'])
-        for acc in self._client.get_accounts() if acc['currency'] in accounts]
-    for index, data in enumerate(account_ids):
-      id_, currency = data
-      accuracy = 2 if currency == 'USD' else 4
+    """Get trade history for specified accounts: USD, BTC, ETH, LTC, etc."""
+    # TODO: allow user to specify what currency to use
+    acc_ids = []
+
+    for acc in self._client.get_accounts():
+      currency = acc['currency']
+      if currency in accounts:
+        acc_ids.append((acc['id'], currency))
+
+    for index, value in enumerate(acc_ids):
+      acc_id, currency = value
+      rows = []
       if index != 0:
         print()
       print('Account: %s' % currency)
-      print(' '.join([
-        'Type                ',
-        'Amount    ',
-        'Balance   ',
-        'Product   ',
-        'Date      ',
-      ]))
-      for page in self._client.get_account_history(id_):
+
+      for page in self._client.get_account_history(acc_id):
         for item in page:
           type_ = item['type']
           product = ''
@@ -132,42 +131,44 @@ class Client(object):
             type_ = 'transfer (%s)' % transfer_type
           elif type_ == 'match':
             product = item['details']['product_id']
-          print(' '.join([
-            '%-20s' % type_,
-            '%10s' % self._truncate(item['amount'], accuracy),
-            '%10s' % self._truncate(item['balance'], accuracy),
-            '%10s' % product,
-            # TODO: convert date to local date.
-            '%-20s' % item['created_at'],
+          rows.append(OrderedDict([
+            ('type', type_),
+            ('amount', float(item['amount'])),
+            ('balance', float(item['balance'])),
+            ('product_id', product),
+            ('created_at', item['created_at']),
           ]))
+      print(tabulate(rows))
 
   def orders(self):
+    rows = []
     pages = self._client.get_orders()
-    print(' '.join([
-      'Side      ',
-      'Size      ',
-      'Size (USD)',
-      'Filled    ',
-      'Price     ',
-      'Fees      ',
-      'Status    ',
-      'Date placed'
-    ]))
     for page in pages:
       for order in page:
-        size_usd = float(order['size']) * float(order['price'])
-        fees = self._truncate(order['fill_fees'], 2)
-        print(' '.join([
-          '%-10s' % order['side'],
-          '%10s' % self._truncate(order['size'], 4),
-          '%10s' % self._truncate(str(size_usd), 2),
-          '%10s' % self._truncate(order['filled_size'], 4),
-          '%10s' % self._truncate(order['price'], 2),
-          '%10s' % fees,
-          '%10s' % order['status'],
-          '%20s' % order['created_at'],
+        size, price = float(order['size']), float(order['price'])
+        size_usd = size * price
+        rows.append(OrderedDict([
+          ('id', order['id'][6]),
+          ('product_id', order['product_id']),
+          ('side', order['side']),
+          ('type', order['type']),
+          ('price', price),
+          ('size', size),
+          ('size_usd', size_usd),
+          ('filled_size', float(order['filled_size'])),
+          ('fill_fees', float(order['fill_fees'])),
+          ('status', order['status']),
+          ('time_in_force', order['time_in_force']),
+          ('settled', 'yes' if order['settled'] else 'no'),
+          ('stp', order['stp']),
+          ('created_at', order['created_at']),
+          # TODO: local date.
         ]))
-        # TODO: local date.
+
+    if rows:
+      print(tabulate(rows))
+    else:
+      print('No pending orders')
 
   def order(self, order_type, side, product, size, price):
     """Place an order.
@@ -190,15 +191,16 @@ class Client(object):
     # TODO: make this configurable
     self_trade_prevention = True
     func = self._client.buy if side == 'buy' else self._client.sell
+    # TODO: read the self trade prevention option from config
     func = functools.partial(func, product_id=product, type=order_type, side=side,
-                             size=size, stp=self_trade_prevention)
+                             size=size)
 
     current_price = float(self._client.get_product_ticker(product)['price'])
 
     if order_type == 'market':
       logging.info('Placing market order: %s %s @ %.2f',
                    side, size, current_price)
-      func()
+      print(func())
 
     elif order_type == 'limit':
       abs_price, amount = self._parse_price(price, current_price)
@@ -213,37 +215,33 @@ class Client(object):
       logging.info('Placing limit order: %s %s @ %s (%.2f)',
                    side, size, abs_price, float(abs_price) - current_price)
       # TODO: make time_in_force, post_only configurable.
-      func(price=abs_price)
+      print(func(price=abs_price))
 
     elif order_type == 'stop':
       # TODO
       raise NotImplementedError('This functionality is not yet implemented.')
 
   def fills(self, product=None):
-    print(' '.join([
-      'Product   ',
-      'Side      ',
-      'Price     ',
-      'Size      ',
-      'Size (USD)',
-      'Fees (USD)',
-      'Settled   ',
-      'Date',
-    ]))
+    rows = []
     pages = self._client.get_fills(product_id=product)
     for page in pages:
       for fill in page:
-        size_usd = float(fill['size']) * float(fill['price'])
-        print(' '.join([
-          '%-10s' % fill['product_id'],
-          '%10s' % fill['side'],
-          '%10s' % self._truncate(fill['price'], 2),
-          '%10s' % self._truncate(fill['size'], 2),
-          '%10s' % self._truncate('%.6f' % size_usd, 2),
-          '%10s' % ('%.2f' % float(fill['fee'])),
-          '%10s' % fill['settled'],
-          fill['created_at'],
+        size, price = float(fill['size']), float(fill['price'])
+        size_usd = size * price
+        rows.append(OrderedDict([
+          ('product_id', fill['product_id']),
+          ('side', fill['side']),
+          ('price', price),
+          ('size', size),
+          ('size_usd', size_usd),
+          ('fee', float(fill['fee'])),
+          ('settled', fill['settled']),
+          ('created_at', fill['created_at']),
         ]))
+    if rows:
+      print(tabulate(rows))
+    else:
+      print('No fills')
 
   def _parse_price(self, price, current_price):
     # TODO: make default diff amount configurable.

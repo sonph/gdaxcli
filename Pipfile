@@ -8,3 +8,4 @@ mock = "*"
 [packages]
 requests = "*"
 gdax = "*"
+tabulate = "*"
