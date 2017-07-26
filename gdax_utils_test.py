@@ -72,12 +72,14 @@ class TestInit(unittest.TestCase):
 
   def testOrder(self):
     # order_type, side, product, size, price
-    self.c.order('market', 'buy', 'eth-usd', '0.1', '')
-    self.c.order('limit', 'buy', 'ETH-USD', '.25', '-1')
+    self.c.order('market', 'buy', 'eth-usd', '0.1', '', skip_confirmation=True)
+    self.c.order('limit', 'buy', 'ETH-USD', '.25', '-1', skip_confirmation=True)
     with self.assertRaises(ValueError):
-      self.c.order('limit', 'buy', 'ETH-USD', '9.3', '125')
+      self.c.order('limit', 'buy', 'ETH-USD', '9.3', '125',
+                   skip_confirmation=True)
     with self.assertRaises(ValueError):
-      self.c.order('limit', 'buy', 'ETH-USD', '9.3', '+1')
+      self.c.order(
+          'limit', 'buy', 'ETH-USD', '9.3', '+1', skip_confirmation=True)
 
     kwargs = {
         'side': 'buy',
@@ -88,14 +90,19 @@ class TestInit(unittest.TestCase):
       mock.call(type='limit', size='.25', price='122.45', **kwargs),
     ])
 
-    self.c.order('market', 'sell', 'ETH-USD', '.2345', None)
-    self.c.order('limit', 'sell', 'ETH-USD', '0.1', '180')
+    self.c.order(
+        'market', 'sell', 'ETH-USD', '.2345', None, skip_confirmation=True)
+    self.c.order(
+        'limit', 'sell', 'ETH-USD', '0.1', '180', skip_confirmation=True)
     with self.assertRaises(ValueError):
-      self.c.order('limit', 'sell', 'ETH-USD', '0.1', '120')
+      self.c.order(
+          'limit', 'sell', 'ETH-USD', '0.1', '120', skip_confirmation=True)
     with self.assertRaises(ValueError):
-      self.c.order('limit', 'sell', 'ETH-USD', '0.1', '123.43')
+      self.c.order(
+          'limit', 'sell', 'ETH-USD', '0.1', '123.43', skip_confirmation=True)
     with self.assertRaises(ValueError):
-      self.c.order('limit', 'sell', 'ETH-USD', '0.1', '-.5')
+      self.c.order(
+          'limit', 'sell', 'ETH-USD', '0.1', '-.5', skip_confirmation=True)
 
     kwargs['side'] = 'sell'
     self.mock_client.sell.assert_has_calls([

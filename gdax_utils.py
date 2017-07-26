@@ -98,6 +98,9 @@ def is_str_zero(s):
         return False
   return True
 
+def confirm():
+  response = raw_input('Proceed? [y/N]: ')
+  return response == 'y' or response == 'Y'
 
 class Client(object):
   """Wrapper of the gdax-python library."""
@@ -237,7 +240,8 @@ class Client(object):
     else:
       print('No pending orders')
 
-  def order(self, order_type, side, product, size, price):
+  def order(self, order_type, side, product, size, price,
+      skip_confirmation=False):
     """Place an order.
 
     Args:
@@ -250,6 +254,7 @@ class Client(object):
           Price can be relative to the current ticker price by prepending
           the difference amount with + or - . Order is checked to make sure
           you're not buying higher or selling lower than current price.
+      skip_confirmation: If True, do not ask for confirmation.
     """
     product = product.upper()
     self._check_valid_order(
@@ -259,15 +264,18 @@ class Client(object):
     self_trade_prevention = True
     func = self._client.buy if side == 'buy' else self._client.sell
     # TODO: read the self trade prevention option from config
-    func = functools.partial(func, product_id=product, type=order_type, side=side,
-                             size=size)
+    kwargs = {
+        'product_id': product,
+        'type': order_type,
+        'side': side,
+        'size': size,
+    }
 
     current_price = float(self._client.get_product_ticker(product)['price'])
 
     if order_type == 'market':
       logging.info('Placing market order: %s %s @ %.2f',
                    side, size, current_price)
-      print(func())
 
     elif order_type == 'limit':
       abs_price, amount = self._parse_price(price, current_price)
@@ -282,11 +290,16 @@ class Client(object):
       logging.info('Placing limit order: %s %s @ %s (%.2f)',
                    side, size, abs_price, float(abs_price) - current_price)
       # TODO: make time_in_force, post_only configurable.
-      print(func(price=abs_price))
+      kwargs['price'] = abs_price
 
     elif order_type == 'stop':
       # TODO
       raise NotImplementedError('This functionality is not yet implemented.')
+
+    if skip_confirmation or confirm():
+      print(func(**kwargs))
+    else:
+      print('Did nothing')
 
   def fills(self, product=None):
     rows = []
