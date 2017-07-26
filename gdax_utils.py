@@ -12,10 +12,24 @@ from __future__ import print_function
 import functools
 import logging
 import string
+import sys
+import traceback
 
-import gdax
+try:
+  import gdax
+except ImportError:
+  traceback.print_exc()
+  print('Unable to import gdax. Make sure you follow the installation'
+        ' instructions at https://github.com/sonph/gdaxcli')
+  sys.exit(1)
 
-import config
+try:
+  import config
+except ImportError:
+  traceback.print_exc()
+  print('Unable to import configurations. Make sure you follow the instructions'
+        ' for configuring API keys at https://github.com/sonph/gdaxcli')
+  sys.exit(1)
 
 DIGITS = set(string.digits)
 
