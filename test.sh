@@ -1,3 +1,6 @@
 #!/bin/bash
-cp -f config.example.py config.py  # Create dummy config file.
+
+# Create dummy config file.
+[[ ! -e config.py ]] && cp -f config.example.py config.py
+
 pipenv run python *_test.py
