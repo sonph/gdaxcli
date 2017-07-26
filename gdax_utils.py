@@ -98,9 +98,9 @@ def is_str_zero(s):
         return False
   return True
 
-def confirm():
+def confirm(message='Proceed?'):
   ok = set(['y', 'Y'])
-  response = raw_input('Proceed? [y/N]: ')
+  response = raw_input('%s [y/N]: ' % message)
   if response == '':
     print('Enter y or Y to proceed.')
   return response in ok
@@ -215,27 +215,7 @@ class Client(object):
     pages = self._client.get_orders()
     for page in pages:
       for order in page:
-        size, price = float(order['size']), float(order['price'])
-        size_usd = size * price
-        fill_fees = order['fill_fees']
-        rows.append(OrderedDict([
-          ('id', order['id'][6]),
-          ('product_id', order['product_id']),
-          ('side', colorize(order['side'], lambda x: x == 'buy')),
-          ('type', order['type']),
-          ('price', price),
-          ('size', size),
-          ('size_usd', size_usd),
-          ('filled_size', order['filled_size']),
-          ('fill_fees', red(format_float(fill_fees)) if not is_str_zero(fill_fees) else float(fill_fees)),
-          ('status', colorize(order['status'], lambda x: x == 'open')),
-          ('time_in_force', order['time_in_force']),
-          ('settled', 'yes' if order['settled'] else red('no')),
-          ('stp', order['stp']),
-          ('created_at', order['created_at']),
-          # TODO: local date.
-        ]))
-
+        rows.append(self._parse_order(order))
     if rows:
       print(tabulate(rows))
     else:
@@ -300,11 +280,39 @@ class Client(object):
 
     if skip_confirmation or confirm():
       if side == 'buy':
-        self._client.buy(**kwargs)
+        print(self._client.buy(**kwargs))
       else:
-        self._client.sell(**kwargs)
+        print(self._client.sell(**kwargs))
     else:
       print('Did nothing')
+
+  def order_cancel(self, order_id_prefix, skip_confirmation=False):
+    order_ids = []
+    pages = self._client.get_orders()
+    for page in pages:
+      for order in page:
+        order_ids.append(order['id'])
+
+    possible_matches = []
+    for order_id in order_ids:
+      if order_id.startswith(order_id_prefix):
+        possible_matches.append(order_id)
+
+    if not possible_matches:
+      print('Order prefix does not match any')
+      return
+    if len(possible_matches) > 1:
+      print('Order prefix too short; cannot uniquely identify an order')
+      return
+
+    order = self._client.get_order(possible_matches[0])
+    # TODO: factor out this error checking logic
+    if isinstance(order, dict) and order.has_key('message'):
+      print(order)
+
+    print(tabulate([self._parse_order(order)]))
+    if skip_confirmation or confirm('Cancel order?'):
+      print(self._client.cancel_order(order_id))
 
   def fills(self, product=None):
     rows = []
@@ -328,6 +336,28 @@ class Client(object):
       print(tabulate(rows))
     else:
       print('No fills')
+
+  def _parse_order(self, order):
+    size, price = float(order['size']), float(order['price'])
+    size_usd = size * price
+    fill_fees = order['fill_fees']
+    return OrderedDict([
+      ('id', order['id'][:6]),
+      ('product_id', order['product_id']),
+      ('side', colorize(order['side'], lambda x: x == 'buy')),
+      ('type', order['type']),
+      ('price', price),
+      ('size', size),
+      ('size_usd', size_usd),
+      ('filled_size', order['filled_size']),
+      ('fill_fees', red(format_float(fill_fees)) if not is_str_zero(fill_fees) else float(fill_fees)),
+      ('status', colorize(order['status'], lambda x: x == 'open')),
+      ('time_in_force', order['time_in_force']),
+      ('settled', 'yes' if order['settled'] else red('no')),
+      ('stp', order['stp']),
+      ('created_at', order['created_at']),
+      # TODO: local date.
+    ])
 
   def _parse_price(self, price, current_price):
     # TODO: make default diff amount configurable.

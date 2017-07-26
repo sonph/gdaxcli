@@ -51,13 +51,18 @@ def main():
       # TODO: add confirmation and option to skip -y/--yes
       try:
         order_type = sys.argv[2]
-        side = sys.argv[3]
-        product = sys.argv[4]
-        size = sys.argv[5]
-        price = sys.argv[6] if len(sys.argv) == 7 else None
+        if order_type == 'cancel':
+          order_id = sys.argv[3]
+          client.order_cancel(order_id)
+        else:
+          side = sys.argv[3]
+          product = sys.argv[4]
+          size = sys.argv[5]
+          price = sys.argv[6] if len(sys.argv) == 7 else None
+          client.order(order_type, side, product, size, price)
       except IndexError:
-        raise ValueError('Missing a required value')
-      client.order(order_type, side, product, size, price)
+        raise ValueError('Missing required value: '
+            'order limit/market/stop buy/sell product size [price]')
     elif cmd == 'fills':
       client.fills()
     else:
