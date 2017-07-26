@@ -99,8 +99,11 @@ def is_str_zero(s):
   return True
 
 def confirm():
+  ok = set(['y', 'Y'])
   response = raw_input('Proceed? [y/N]: ')
-  return response == 'y' or response == 'Y'
+  if response == '':
+    print('Enter y or Y to proceed.')
+  return response in ok
 
 class Client(object):
   """Wrapper of the gdax-python library."""
@@ -200,8 +203,6 @@ class Client(object):
             is_green = False
           rows.append(OrderedDict([
             ('type', colorize(type_, is_green)),
-            # TODO: fix the amount column not aligned as numbers. This is
-            # probably due to the color.
             ('amount', colorize(amount, is_green)),
             ('balance', format_float(item['balance'])),
             ('product_id', product),
@@ -257,47 +258,51 @@ class Client(object):
       skip_confirmation: If True, do not ask for confirmation.
     """
     product = product.upper()
-    self._check_valid_order(
-        order_type, side, product, size, price)
+    self._check_valid_order(order_type, side, product, size, price)
 
-    # TODO: make this configurable
-    self_trade_prevention = True
-    func = self._client.buy if side == 'buy' else self._client.sell
-    # TODO: read the self trade prevention option from config
+    current_price = float(self._client.get_product_ticker(product)['price'])
+
+    if order_type == 'market':
+      total = float(size) * current_price
+      price = current_price
+    elif order_type == 'limit':
+      abs_price, amount = self._parse_price(price, current_price)
+      if side == 'buy' and amount >= 0:
+        raise ValueError('Buying higher than or equal to current price:'
+                         ' %s >= %.2f' % (abs_price, current_price))
+      elif side == 'sell' and amount <= 0:
+        raise ValueError('Selling lower than or equal to current price:'
+                         ' %s <= %.2f' % (abs_price, current_price))
+      # TODO: make time_in_force, post_only configurable.
+      price = abs_price
+    elif order_type == 'stop':
+      # TODO
+      raise NotImplementedError('This functionality is not yet implemented.')
+
     kwargs = {
         'product_id': product,
         'type': order_type,
         'side': side,
         'size': size,
     }
+    # TODO: read the self trade prevention option from config
 
-    current_price = float(self._client.get_product_ticker(product)['price'])
-
-    if order_type == 'market':
-      logging.info('Placing market order: %s %s @ %.2f',
-                   side, size, current_price)
-
-    elif order_type == 'limit':
-      abs_price, amount = self._parse_price(price, current_price)
-      if side == 'buy' and amount >= 0:
-        raise ValueError(
-            'Buying higher than or equal to current price: %s >= %.2f' % (
-            abs_price, current_price))
-      elif side == 'sell' and amount <= 0:
-        raise ValueError(
-            'Selling lower than or equal to current price: %s <= %.2f' % (
-            abs_price, current_price))
-      logging.info('Placing limit order: %s %s @ %s (%.2f)',
-                   side, size, abs_price, float(abs_price) - current_price)
-      # TODO: make time_in_force, post_only configurable.
+    diff = ''
+    if order_type == 'limit':
       kwargs['price'] = abs_price
+      diff = float(price) - current_price
+      diff = ' (' + colorize('%.2f' % diff, negative) + ')'
 
-    elif order_type == 'stop':
-      # TODO
-      raise NotImplementedError('This functionality is not yet implemented.')
+    total = float(size) * float(price)
+    print('Placing %s order: %s %s %s @ %s%s; total %.2f' % (
+        order_type.upper(), colorize(side, lambda side: side == 'buy'), size,
+        product, price, diff, total))
 
     if skip_confirmation or confirm():
-      print(func(**kwargs))
+      if side == 'buy':
+        self._client.buy(**kwargs)
+      else:
+        self._client.sell(**kwargs)
     else:
       print('Did nothing')
 
