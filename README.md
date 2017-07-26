@@ -1,5 +1,7 @@
 # GdaxCli
 
+[![travis-build-badge][7]][8]
+
 A commandline client for cryptocurrency trading on [GDAX][1] (Global Digital Assets Exchange).
 
 Work in progress.
@@ -76,3 +78,5 @@ Remember:
 [4]: https://www.gdax.com/settings/api
 [5]: https://docs.gdax.com/#generating-an-api-key
 [6]: https://public.sandbox.gdax.com
+[7]: https://travis-ci.org/sonph/gdaxcli.svg?branch=master
+[8]: https://travis-ci.org/sonph/gdaxcli
