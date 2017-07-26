@@ -82,7 +82,6 @@ class TestInit(unittest.TestCase):
     kwargs = {
         'side': 'buy',
         'product_id': 'ETH-USD',
-        'stp': True
     }
     self.mock_client.buy.assert_has_calls([
       mock.call(type='market', size='0.1', **kwargs),
