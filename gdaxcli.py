@@ -32,37 +32,41 @@ def main():
 
   client = gdax_utils.Client()
 
-  if cmd == 'help':
-    print(usage.__doc__)
-  elif cmd == 'products':
-    client.products()
-  elif cmd == 'ticker':
-    products = sys.argv[2:] if len(sys.argv) > 2 else None
-    client.ticker(products)
-  elif cmd == 'balance':
-    client.balance()
-  elif cmd == 'history':
-    accounts = sys.argv[2:] if len(sys.argv) > 2 else ['USD']
-    client.history(accounts)
-  elif cmd == 'orders':
-    client.orders()
-  elif cmd == 'order':
-    # TODO: add confirmation and option to skip -y/--yes
-    try:
-      order_type = sys.argv[2]
-      side = sys.argv[3]
-      product = sys.argv[4]
-      size = sys.argv[5]
-      price = sys.argv[6] if len(sys.argv) == 7 else None
-    except IndexError:
-      raise ValueError('Missing a required value')
-    client.order(order_type, side, product, size, price)
-  elif cmd == 'fills':
-    client.fills()
-  else:
-    logging.error('Invalid command: %s', cmd)
-    sys.exit(1)
-
+  try:
+    if cmd == 'help':
+      print(usage.__doc__)
+    elif cmd == 'products':
+      client.products()
+    elif cmd == 'ticker':
+      products = sys.argv[2:] if len(sys.argv) > 2 else None
+      client.ticker(products)
+    elif cmd == 'balance':
+      client.balance()
+    elif cmd == 'history':
+      accounts = sys.argv[2:] if len(sys.argv) > 2 else ['USD']
+      client.history(accounts)
+    elif cmd == 'orders':
+      client.orders()
+    elif cmd == 'order':
+      # TODO: add confirmation and option to skip -y/--yes
+      try:
+        order_type = sys.argv[2]
+        side = sys.argv[3]
+        product = sys.argv[4]
+        size = sys.argv[5]
+        price = sys.argv[6] if len(sys.argv) == 7 else None
+      except IndexError:
+        raise ValueError('Missing a required value')
+      client.order(order_type, side, product, size, price)
+    elif cmd == 'fills':
+      client.fills()
+    else:
+      logging.error('Invalid command: %s', cmd)
+      sys.exit(1)
+  except Exception as e:
+    import traceback
+    traceback.print_exc()
+    print('GETTING AN ERROR? File it at https://github.com/sonph/gdaxcli/issues')
 
 if __name__ == '__main__':
   utils.configure_logging(to_file=False)
