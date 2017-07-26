@@ -337,6 +337,11 @@ class Client(object):
     else:
       print('No fills')
 
+  # TODO: support product arg.
+  def cancel_all(self, product):
+    if confirm('Cancel ALL orders for %s?' % product):
+      print(self._client.cancel_all(product=product))
+
   def _parse_order(self, order):
     size, price = float(order['size']), float(order['price'])
     size_usd = size * price

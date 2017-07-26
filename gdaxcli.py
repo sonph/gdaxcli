@@ -14,13 +14,21 @@ def usage():
       history [account1 account2..] Get account history (transfer, match, fee, rebate).
                                         Default USD.
 
-      orders                        List open orders.
-      order limit/market/stop buy/sell product size [price]
+      fills [product]               Get recent fills.
+
+      order list                    List open orders
+      orders
+
+      orders cancel <product>       Cancel all orders.
+      order cancel all <product>
+
+      order cancel <id>             Cancel order. Id can be a short prefix.
+
+      order <limit/market/stop> <buy/sell> <product> <size> [price]
                                     Place an order. Limit price can be absolute or
                                         relative such as 180, 180.23, -1, +.5
                                         Product can be uppercased or lowercased.
                                         For example: eth-usd, BTC-GBP, ..
-      fills [product]               Get recent fills.
   """
 
 def main():
@@ -46,14 +54,24 @@ def main():
       accounts = sys.argv[2:] if len(sys.argv) > 2 else ['USD']
       client.history(accounts)
     elif cmd == 'orders':
-      client.orders()
+      if len(sys.argv) > 2 and sys.argv[2] == 'cancel':
+        product = sys.argv[3]
+        client.cancel_all(product)
+      else:
+        client.orders()
     elif cmd == 'order':
       # TODO: add confirmation and option to skip -y/--yes
       try:
         order_type = sys.argv[2]
         if order_type == 'cancel':
           order_id = sys.argv[3]
-          client.order_cancel(order_id)
+          if order_id == 'all':
+            product = sys.argv[4]
+            client.cancel_all(product)
+          else:
+            client.order_cancel(order_id)
+        elif order_type == 'list':
+          client.orders()
         else:
           side = sys.argv[3]
           product = sys.argv[4]
@@ -61,8 +79,9 @@ def main():
           price = sys.argv[6] if len(sys.argv) == 7 else None
           client.order(order_type, side, product, size, price)
       except IndexError:
-        raise ValueError('Missing required value: '
-            'order limit/market/stop buy/sell product size [price]')
+        logging.error('Missing required value.')
+        print(usage.__doc__)
+        sys.exit()
     elif cmd == 'fills':
       client.fills()
     else:

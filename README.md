@@ -17,8 +17,17 @@ Usage: gdaxcli <command> [arguments]
     history [account1 account2..] Get account history (transfer, match, fee, rebate).
                                       Default USD.
 
-    orders                        List open orders.
-    order limit/market/stop buy/sell product size [price]
+    fills [product]               Get recent fills.
+
+    order list                    List open orders
+    orders
+
+    orders cancel <product>       Cancel all orders.
+    order cancel all <product>
+
+    order cancel <id>             Cancel order. Id can be a short prefix.
+
+    order <limit/market/stop> <buy/sell> <product> <size> [price]
                                   Place an order. Limit price can be absolute or
                                       relative such as 180, 180.23, -1, +.5
                                       Product can be uppercased or lowercased.
