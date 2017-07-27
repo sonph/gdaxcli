@@ -167,52 +167,45 @@ class Client(object):
         prices[product_id] = self._client.get_product_ticker(
             product_id)['price']
 
-    totals = {}
+    # Total all accounts converted to USD
+    balance_total = 0
+
+    # Map of account currency -> account total in USD
     acc_totals = {}
+
     accounts = self._client.get_accounts()
     accounts.sort(key=lambda acc: acc['currency'])
     for acc in accounts:
       hodl = acc['hold']
 
       if acc['currency'] != 'USD':
-        total_usd = float(prices[acc['currency'] + '-USD']) * float(acc['balance'])
+        acc_total_usd = float(prices[acc['currency'] + '-USD']) * float(acc['balance'])
       else:
-        total_usd = float(acc['balance'])
+        acc_total_usd = float(acc['balance'])
 
       # We need to store float values here, since the OrderedDict's have the
       # colored strings.
-      acc_totals[acc['currency']] = total_usd
+      acc_totals[acc['currency']] = acc_total_usd
 
       # Calculate sum total.
-      totals['balance'] = totals.get('balance', 0) + float(acc['balance'])
-      totals['available'] = totals.get('available', 0) + float(acc['available'])
-      totals['hold'] = totals.get('hold', 0) + float(acc['hold'])
-      totals['total_usd'] = totals.get('total_usd', 0) + total_usd
+      balance_total += acc_total_usd
 
       rows.append(OrderedDict([
         ('currency', acc['currency']),
         ('balance', acc['balance']),
         ('available', acc['available']),
         ('hold', red(hodl) if not is_str_zero(hodl) else hodl),
-        ('total_usd', total_usd)
+        ('total_usd', acc_total_usd)
       ]))
-
-    # Add total row.
-    rows.append(OrderedDict([
-      ('currency', 'TOTAL'),
-      ('balance', totals['balance']),
-      ('available', totals['available']),
-      ('hold', red(totals['hold']) if positive(totals['hold']) else totals['hold']),
-      ('total_usd', green(totals['total_usd'])),
-    ]))
 
     # Calculate percent holding in each of teh currencies as `perc` column.
     for acc in rows:
       if acc['currency'] != 'TOTAL':
-        perc = float(acc_totals[acc['currency']]) / totals['total_usd'] * 100
+        perc = float(acc_totals[acc['currency']]) / balance_total * 100
         acc['perc'] = perc
 
     print(tabulate(rows))
+    print('\nAccount total balance in USD: %s' % format_float(balance_total))
 
   def history(self, accounts):
     """Get trade history for specified accounts: USD, BTC, ETH, LTC, etc."""
