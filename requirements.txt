@@ -1,0 +1,4 @@
+requests
+gdax
+tabulate
+colorama
