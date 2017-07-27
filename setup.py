@@ -13,6 +13,10 @@ setup(
     classifiers = [],
 )
 
-# To upload to PyPI:
+# To upload to testpypi.python.org:
+# python setup.py register -r pypitest
+# python setup.py sdist upload -r pypitest
+
+# To upload to pypi.python.org:
 # python setup.py register -r pypi
 # python setup.py sdist upload -r pypi
