@@ -47,7 +47,7 @@ DIGITS = set(string.digits)
 DEFAULT_ACCURACY = 4
 
 tabulate = functools.partial(tabulate,
-    tablefmt='plain', headers='keys', floatfmt='.%df' % DEFAULT_ACCURACY)
+    tablefmt='simple', headers='keys', floatfmt='.%df' % DEFAULT_ACCURACY)
 
 negative = lambda x: float(x) < 0
 nonnegative = lambda x: float(x) >= 0
