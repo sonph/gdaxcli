@@ -1,4 +1,3 @@
-requests
 gdax
 tabulate
 colorama
