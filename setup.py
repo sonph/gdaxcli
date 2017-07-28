@@ -1,16 +1,21 @@
 from distutils.core import setup
 from setuptools import find_packages
 
+with open('README.md') as f:
+  long_description = f.read()
+
+
 setup(
     name='gdaxcli',
     packages=find_packages('gdaxcli', exclude=['tests']),
-    version='0.1.0',
+    version='0.1.1',
     description='Commandline client for trading on GDAX',
+    long_description=long_description,
 
     author='Son Pham',
     author_email='sp@sonpham.me',
     url='https://github.com/sonph/gdaxcli',
-    download_url='https://github.com/sonph/gdaxcli/archive/0.1.0.zip',
+    download_url='https://github.com/sonph/gdaxcli/archive/0.1.1.zip',
     license='MIT',
 
     keywords='gdax trading cryptocurrency bitcoin ethereum',
@@ -48,3 +53,8 @@ setup(
 
 # For reference: https://packaging.python.org/tutorials/distributing-packages/
 # Python package management is a PITA.
+
+# pip install twine
+# rm -rf dist
+# python setup.py bdist_weheel --universal
+# twine upload dist/*
