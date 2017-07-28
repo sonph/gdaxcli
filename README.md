@@ -60,6 +60,10 @@ Usage: gdaxcli <command> [arguments]
                                       For example: eth-usd, BTC-GBP, ..
 ```
 
+Example usage screencast:
+
+[![asciicast](https://asciinema.org/a/131026.png)](https://asciinema.org/a/131026)
+
 ## Configuring
 
 To obtain an API key for your account to be used with this tool:

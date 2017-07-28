@@ -20,7 +20,14 @@ pip install mock
 
 ## Sandbox
 
-Use the gdax sandbox for testing. I have not added the `--sandbox` flag yet, but in the mean time:
+You can use the gdax sandbox for testing orders. The API responses aren't exactly like the
+production API, so it's too much of a pain to make the tool work with all the quirks of the sandbox.
+This remains a **TODO**.
+
+For now you can test read-only commands like `balance, orders, fills, products, etc.` with the prod
+API.
+
+The `--sandbox` flag is not added yet, but in the mean time:
 
 1. Put your sandbox keys in `~/.gdaxconfig_cli.sandbox`
 2. Update the `gdax_utils.Client.__init__` method to
