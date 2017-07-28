@@ -60,7 +60,7 @@ Usage: gdaxcli <command> [arguments]
                                       For example: eth-usd, BTC-GBP, ..
 ```
 
-Example usage screencast:
+Example usage screencast (v0.1.1):
 
 [![asciicast](https://asciinema.org/a/131026.png)](https://asciinema.org/a/131026)
 
