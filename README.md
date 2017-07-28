@@ -6,6 +6,30 @@ A commandline client for cryptocurrency trading on [GDAX][1] (Global Digital Ass
 
 Work in progress.
 
+## Installation
+
+Requires python 2.7+.
+
+```
+pip install gdaxcli
+```
+
+To run:
+```
+python -m gdaxcli
+```
+
+or add an alias to shorten the command:
+```
+echo "alias gdaxcli='python -m gdaxcli'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+so you can call:
+```
+gdaxcli <arguments>
+```
+
 ## Usage
 
 ```
@@ -47,9 +71,13 @@ See [gdax docs][5] for more information on the API key.
 
 **TODO**: mention the sandbox
 
+## Changes
+
+See [CHANGES][CHANGES.md]
+
 ## Contributing
 
-See [CONTRIBUTING][3].
+See [CONTRIBUTING][CONTRIBUTING.md].
 
 ## License
 
@@ -69,7 +97,6 @@ Remember:
 
 [1]: https://www.gdax.com/
 [2]: https://choosealicense.com/licenses/mit/
-[3]: CONTRIBUTING.md
 [4]: https://www.gdax.com/settings/api
 [5]: https://docs.gdax.com/#generating-an-api-key
 [6]: https://public.sandbox.gdax.com
