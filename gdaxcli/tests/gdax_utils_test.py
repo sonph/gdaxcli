@@ -4,6 +4,7 @@ import unittest
 
 import mock
 
+from .. import exceptions
 from .. import gdax_utils
 from .. import utils
 
@@ -75,10 +76,10 @@ class TestInit(unittest.TestCase):
     # order_type, side, product, size, price
     self.c.order('market', 'buy', 'eth-usd', '0.1', '', skip_confirmation=True)
     self.c.order('limit', 'buy', 'ETH-USD', '.25', '-1', skip_confirmation=True)
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InvalidOrderError):
       self.c.order('limit', 'buy', 'ETH-USD', '9.3', '125',
                    skip_confirmation=True)
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InvalidOrderError):
       self.c.order(
           'limit', 'buy', 'ETH-USD', '9.3', '+1', skip_confirmation=True)
 
@@ -95,13 +96,13 @@ class TestInit(unittest.TestCase):
         'market', 'sell', 'ETH-USD', '.2345', None, skip_confirmation=True)
     self.c.order(
         'limit', 'sell', 'ETH-USD', '0.1', '180', skip_confirmation=True)
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InvalidOrderError):
       self.c.order(
           'limit', 'sell', 'ETH-USD', '0.1', '120', skip_confirmation=True)
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InvalidOrderError):
       self.c.order(
           'limit', 'sell', 'ETH-USD', '0.1', '123.43', skip_confirmation=True)
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InvalidOrderError):
       self.c.order(
           'limit', 'sell', 'ETH-USD', '0.1', '-.5', skip_confirmation=True)
 

@@ -24,6 +24,7 @@ colorama.init()
 # https://pypi.python.org/pypi/tabulate
 from tabulate import tabulate
 
+from gdaxcli import exceptions
 from gdaxcli import utils
 
 try:
@@ -287,12 +288,14 @@ class Client(object):
     elif order_type == 'limit':
       abs_price, amount = self._parse_price(price, current_price)
       if side == 'buy' and amount >= 0:
-        print('Error: Buying higher than or equal to current price:'
-                         ' %s >= %.2f' % (abs_price, current_price))
+        raise exceptions.InvalidOrderError(
+            'Error: Buying higher than or equal to current price:'
+            ' %s >= %.2f' % (abs_price, current_price))
         return
       elif side == 'sell' and amount <= 0:
-        print('Error: Selling lower than or equal to current price:'
-                         ' %s <= %.2f' % (abs_price, current_price))
+        raise exceptions.InvalidOrderError(
+            'Error: Selling lower than or equal to current price:'
+            ' %s <= %.2f' % (abs_price, current_price))
         return
       # TODO: make time_in_force, post_only configurable.
       price = abs_price
