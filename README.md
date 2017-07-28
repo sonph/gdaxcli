@@ -66,20 +66,22 @@ To obtain an API key for your account to be used with this tool:
 
   1. Login to your GDAX account
   2. Go to **Settings** > **API** or [https://www.gdax.com/settings/api][4]
-  3. Select the **trade** permission and generate an API key
-  4. Run `bash make.sh configure` and copy paste the passphrase, key and secret accordingly
+  3. Select the **Trade** permission and generate an API key. This allows the software to only put
+     in trade orders and not transfer, deposit or withdraw.
+  4. Run `bash make.sh configure` and copy paste the passphrase, key and secret accordingly. Data is
+     saved to `~/.gdaxcli_config` with chmod `600`.
 
-See [gdax docs][5] for more information on the API key.
+See [gdax docs][5] for more information on the API key and permissions.
 
 **TODO**: mention the sandbox
 
 ## Changes
 
-See [CHANGES][CHANGES.md]
+See [CHANGES](CHANGES.md)
 
 ## Contributing
 
-See [CONTRIBUTING][CONTRIBUTING.md].
+See [CONTRIBUTING](CONTRIBUTING.md).
 
 ## License
 
