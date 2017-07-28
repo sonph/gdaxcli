@@ -16,7 +16,7 @@ install() {
 configure() {
   CONFIG_FILE="$HOME/.gdaxcli_config"
   if [[ -e "$CONFIG_FILE" ]]; then
-    echo "File $CONFIG_FILE exists. Remove and retry."
+    echo "File $CONFIG_FILE exists. Remove file and retry."
   else
     if [[ $# -ne 3 ]]; then
       echo -n "Passphrase: "

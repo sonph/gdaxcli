@@ -24,6 +24,8 @@ colorama.init()
 # https://pypi.python.org/pypi/tabulate
 from tabulate import tabulate
 
+from gdaxcli import utils
+
 try:
   import gdax
   # TODO: include other non-standard libraries in this as well.
@@ -31,14 +33,6 @@ except ImportError:
   traceback.print_exc()
   print('Unable to import gdax. Make sure you follow the installation'
         ' instructions at https://github.com/sonph/gdaxcli')
-  sys.exit(1)
-
-try:
-  import config
-except ImportError:
-  traceback.print_exc()
-  print('Unable to import configurations. Make sure you follow the instructions'
-        ' for configuring API keys at https://github.com/sonph/gdaxcli')
   sys.exit(1)
 
 DIGITS = set(string.digits)
@@ -110,8 +104,11 @@ class Client(object):
 
   def __init__(self):
     """Initializer."""
+    config = utils.read_config()
     self._client = gdax.AuthenticatedClient(
-        key=config.KEY, b64secret=config.SECRET, passphrase=config.PASSPHRASE)
+        key=config['key'],
+        b64secret=config['secret'],
+        passphrase=config['passphrase'])
     # TODO: configure sandbox keys.
     # TODO: allow public client.
 
