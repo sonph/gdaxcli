@@ -4,6 +4,8 @@
 
 A commandline client for cryptocurrency trading on [GDAX][1] (Global Digital Assets Exchange).
 
+**TODO**: Add features and goals here.
+
 Work in progress.
 
 ## Installation
