@@ -37,6 +37,9 @@ except ImportError:
 
 DIGITS = set(string.digits)
 
+# 'CAD' is available in the sandbox.
+FIAT_CURRENCY = set(['USD', 'CAD', 'GBP', 'EUR'])
+
 # TODO: make this configurable.
 DEFAULT_ACCURACY = 4
 
@@ -143,7 +146,7 @@ class Client(object):
         ('size', tick['size']),
         ('bid', tick['bid']),
         ('ask', tick['ask']),
-        ('gap' , gap),
+        ('gap', gap),
         ('24h_volume', tick['volume']),
         ('24h_open', stats['open']),
         ('24h_high', stats['high']),
@@ -175,7 +178,7 @@ class Client(object):
     for acc in accounts:
       hodl = acc['hold']
 
-      if acc['currency'] != 'USD':
+      if acc['currency'] not in FIAT_CURRENCY:
         acc_total_usd = float(prices[acc['currency'] + '-USD']) * float(acc['balance'])
       else:
         acc_total_usd = float(acc['balance'])
@@ -198,8 +201,11 @@ class Client(object):
     # Calculate percent holding in each of teh currencies as `perc` column.
     for acc in rows:
       if acc['currency'] != 'TOTAL':
-        perc = float(acc_totals[acc['currency']]) / balance_total * 100
-        acc['perc'] = perc
+        if balance_total > 0:
+          perc = float(acc_totals[acc['currency']]) / balance_total * 100
+          acc['perc'] = perc
+      else:
+        acc['perc'] = 100.00
 
     print(tabulate(rows))
     print('\nAccount total balance in USD: %s' % format_float(balance_total))
@@ -281,11 +287,13 @@ class Client(object):
     elif order_type == 'limit':
       abs_price, amount = self._parse_price(price, current_price)
       if side == 'buy' and amount >= 0:
-        raise ValueError('Buying higher than or equal to current price:'
+        print('Error: Buying higher than or equal to current price:'
                          ' %s >= %.2f' % (abs_price, current_price))
+        return
       elif side == 'sell' and amount <= 0:
-        raise ValueError('Selling lower than or equal to current price:'
+        print('Error: Selling lower than or equal to current price:'
                          ' %s <= %.2f' % (abs_price, current_price))
+        return
       # TODO: make time_in_force, post_only configurable.
       price = abs_price
     elif order_type == 'stop':
