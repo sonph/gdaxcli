@@ -3,7 +3,7 @@ python:
   - "2.7"
 
 # install deps
-install: "bash install.sh"
+install: "bash make.sh install"
 
 # run tests
-script: "bash test.sh"
+script: "bash make.sh test"

@@ -2,9 +2,10 @@
 
 import unittest
 
-import gdax_utils
 import mock
-import utils
+
+from .. import gdax_utils
+from .. import utils
 
 utils.configure_logging(to_stderr=True, to_file=False)
 

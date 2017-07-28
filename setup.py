@@ -1,7 +1,9 @@
 from distutils.core import setup
+from setuptools import find_packages
+
 setup(
     name = 'gdaxcli',
-    packages = ['gdaxcli'],
+    packages = find_packages('gdaxcli', exclude=['tests']),
     version = '0.1',
     description = 'Commandline client for trading on GDAX',
     author = 'Son Pham',
@@ -11,6 +13,12 @@ setup(
     keywords = ['gdax', 'cli', 'tool', 'client', 'cryptocurrency', 'bitcoin',
       'ethereum', 'trading'],
     classifiers = [],
+    install_requires = [
+      # TODO: sync this with requirements.txt
+      "gdax",
+      "tabulate",
+      "colorama",
+    ]
 )
 
 # To upload to testpypi.python.org:
