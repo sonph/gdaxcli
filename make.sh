@@ -33,9 +33,22 @@ configure() {
 }
 
 test() {
+  unit_test
+  pip_test
+}
+
+unit_test() {
   # For unittesting.
   configure PASSPHRASE KEY SECRET
   pipenv run python -m gdaxcli.tests.gdax_utils_test
+}
+
+pip_test() {
+  # Try installing and running from pip.
+  mkdir pip_test
+  cd pip_test || return 1
+  pip install gdaxcli || return 1
+  python -m gdaxcli
 }
 
 gdaxcli() {
